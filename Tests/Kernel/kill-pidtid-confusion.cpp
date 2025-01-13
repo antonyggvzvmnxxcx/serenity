@@ -6,7 +6,7 @@
 
 #include <AK/Assertions.h>
 #include <AK/Format.h>
-#include <LibPthread/pthread.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +39,7 @@ static constexpr useconds_t STEP_SIZE = 1100000;
 
 static void fork_into(void(fn)())
 {
-    const pid_t rc = fork();
+    pid_t const rc = fork();
     if (rc < 0) {
         perror("fork");
         exit(1);

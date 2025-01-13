@@ -40,6 +40,9 @@ public:
     virtual void increase_slider_by_steps(int steps) override { set_target_value(m_target_value + step() * steps); }
     virtual void decrease_slider_by_steps(int steps) override { set_target_value(m_target_value - step() * steps); }
 
+    virtual Optional<UISize> calculated_min_size() const override;
+    virtual Optional<UISize> calculated_preferred_size() const override;
+
     enum Component {
         None,
         DecrementButton,
@@ -76,13 +79,13 @@ private:
     float unclamped_scrubber_size() const;
     int visible_scrubber_size() const;
     int scrubbable_range_in_pixels() const;
-    void on_automatic_scrolling_timer_fired();
-    void set_automatic_scrolling_active(bool, Component);
+    void automatic_scrolling_timer_did_fire();
+    void set_automatic_scrolling_timer_active(bool, Component);
 
-    void scroll_to_position(Gfx::IntPoint const&);
-    void scroll_by_page(Gfx::IntPoint const&);
+    void scroll_to_position(Gfx::IntPoint);
+    void scroll_by_page(Gfx::IntPoint);
 
-    Component component_at_position(Gfx::IntPoint const&);
+    Component component_at_position(Gfx::IntPoint);
 
     void update_animated_scroll();
 

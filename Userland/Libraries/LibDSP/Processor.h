@@ -11,13 +11,12 @@
 #include <AK/RefCounted.h>
 #include <AK/RefPtr.h>
 #include <AK/StdLibExtras.h>
-#include <AK/String.h>
 #include <AK/Types.h>
 #include <LibDSP/Music.h>
 #include <LibDSP/ProcessorParameter.h>
 #include <LibDSP/Transport.h>
 
-namespace LibDSP {
+namespace DSP {
 
 // A processor processes notes or audio into notes or audio. Processors are e.g. samplers, synthesizers, effects, arpeggiators etc.
 class Processor : public RefCounted<Processor> {

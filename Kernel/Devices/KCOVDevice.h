@@ -11,19 +11,16 @@
 
 namespace Kernel {
 class KCOVDevice final : public BlockDevice {
-    friend class DeviceManagement;
+    friend class Device;
 
 public:
-    static HashMap<ProcessID, KCOVInstance*>* proc_instance;
-    static HashMap<ThreadID, KCOVInstance*>* thread_instance;
-
     static NonnullRefPtr<KCOVDevice> must_create();
     static void free_thread();
     static void free_process();
 
     // ^File
-    ErrorOr<Memory::Region*> mmap(Process&, OpenFileDescription&, Memory::VirtualRange const&, u64 offset, int prot, bool shared) override;
-    ErrorOr<NonnullRefPtr<OpenFileDescription>> open(int options) override;
+    ErrorOr<VMObjectAndMemoryType> vmobject_and_memory_type_for_mmap(Process&, Memory::VirtualRange const&, u64& offset, bool shared) override;
+    virtual ErrorOr<NonnullRefPtr<OpenFileDescription>> open(int options) override;
 
 protected:
     KCOVDevice();

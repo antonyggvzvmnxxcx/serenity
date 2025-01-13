@@ -14,14 +14,21 @@
 #include <LibGUI/RadioButton.h>
 #include <LibGUI/TextBox.h>
 
-constexpr StringView time_format_12h = "%I:%M %p";
-constexpr StringView time_format_12h_seconds = "%r";
-constexpr StringView time_format_24h = "%R";
-constexpr StringView time_format_24h_seconds = "%T";
+constexpr auto time_format_12h = "%I:%M %p"sv;
+constexpr auto time_format_12h_seconds = "%r"sv;
+constexpr auto time_format_24h = "%R"sv;
+constexpr auto time_format_24h_seconds = "%T"sv;
 
-ClockSettingsWidget::ClockSettingsWidget()
+ErrorOr<NonnullRefPtr<ClockSettingsWidget>> ClockSettingsWidget::try_create()
 {
-    load_from_gml(clock_settings_widget_gml);
+    auto widget = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ClockSettingsWidget()));
+    TRY(widget->setup());
+    return widget;
+}
+
+ErrorOr<void> ClockSettingsWidget::setup()
+{
+    TRY(load_from_gml(clock_settings_widget_gml));
 
     m_24_hour_radio = *find_descendant_of_type_named<GUI::RadioButton>("24hour_radio");
     auto& twelve_hour_radio = *find_descendant_of_type_named<GUI::RadioButton>("12hour_radio");
@@ -29,7 +36,7 @@ ClockSettingsWidget::ClockSettingsWidget()
     auto& custom_radio = *find_descendant_of_type_named<GUI::RadioButton>("custom_radio");
     m_clock_preview = *find_descendant_of_type_named<GUI::Label>("clock_preview");
 
-    m_time_format = Config::read_string("Taskbar", "Clock", "TimeFormat");
+    m_time_format = Config::read_string("Taskbar"sv, "Clock"sv, "TimeFormat"sv);
     m_custom_format_input = *find_descendant_of_type_named<GUI::TextBox>("custom_format_input");
     m_custom_format_input->set_text(m_time_format);
     m_custom_format_input->set_enabled(false);
@@ -92,18 +99,20 @@ ClockSettingsWidget::ClockSettingsWidget()
     });
     m_clock_preview_update_timer->start();
     update_clock_preview();
+
+    return {};
 }
 
 void ClockSettingsWidget::apply_settings()
 {
-    Config::write_string("Taskbar", "Clock", "TimeFormat", m_custom_format_input->text());
+    Config::write_string("Taskbar"sv, "Clock"sv, "TimeFormat"sv, m_custom_format_input->text());
 }
 
 void ClockSettingsWidget::reset_default_values()
 {
     m_24_hour_radio->set_checked(true);
     m_show_seconds_checkbox->set_checked(true);
-    Config::write_string("Taskbar", "Clock", "TimeFormat", time_format_24h_seconds);
+    Config::write_string("Taskbar"sv, "Clock"sv, "TimeFormat"sv, time_format_24h_seconds);
 }
 
 void ClockSettingsWidget::update_time_format_string()
@@ -119,5 +128,5 @@ void ClockSettingsWidget::update_time_format_string()
 
 void ClockSettingsWidget::update_clock_preview()
 {
-    m_clock_preview->set_text(Core::DateTime::now().to_string(m_time_format));
+    m_clock_preview->set_text(Core::DateTime::now().to_string(m_time_format).release_value_but_fixme_should_propagate_errors());
 }

@@ -7,8 +7,14 @@
 
 #pragma once
 
+// Includes essentially mandated by POSIX:
+// https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/fcntl.h.html
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <Kernel/API/POSIX/fcntl.h>
 #include <Kernel/API/POSIX/sys/stat.h>
+#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 
@@ -29,6 +35,7 @@ int inode_watcher_add_watch(int fd, char const* path, size_t path_length, unsign
 int inode_watcher_remove_watch(int fd, int wd);
 
 int posix_fadvise(int fd, off_t offset, off_t len, int advice);
+int posix_fallocate(int fd, off_t offset, off_t len);
 
 int utimensat(int dirfd, char const* path, struct timespec const times[2], int flag);
 

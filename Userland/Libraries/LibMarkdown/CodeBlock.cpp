@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#include <AK/Forward.h>
 #include <AK/StringBuilder.h>
 #include <LibJS/MarkupGenerator.h>
 #include <LibMarkdown/CodeBlock.h>
@@ -13,50 +14,62 @@
 
 namespace Markdown {
 
-String CodeBlock::render_to_html(bool) const
+ByteString CodeBlock::render_to_html(bool) const
 {
     StringBuilder builder;
 
-    builder.append("<pre>");
+    builder.append("<pre>"sv);
 
     if (m_style.length() >= 2)
-        builder.append("<strong>");
+        builder.append("<strong>"sv);
     else if (m_style.length() >= 2)
-        builder.append("<em>");
+        builder.append("<em>"sv);
 
     if (m_language.is_empty())
-        builder.append("<code>");
+        builder.append("<code>"sv);
     else
         builder.appendff("<code class=\"language-{}\">", escape_html_entities(m_language));
 
-    if (m_language == "js")
-        builder.append(JS::MarkupGenerator::html_from_source(m_code));
-    else
+    if (m_language == "js") {
+        auto html_or_error = JS::MarkupGenerator::html_from_source(m_code);
+        if (html_or_error.is_error()) {
+            warnln("Could not render js code to html: {}", html_or_error.error());
+            builder.append(escape_html_entities(m_code));
+        } else {
+            builder.append(html_or_error.release_value());
+        }
+    } else {
         builder.append(escape_html_entities(m_code));
-
-    builder.append("</code>");
-
-    if (m_style.length() >= 2)
-        builder.append("</strong>");
-    else if (m_style.length() >= 2)
-        builder.append("</em>");
-
-    builder.append("</pre>\n");
-
-    return builder.build();
-}
-
-String CodeBlock::render_for_terminal(size_t) const
-{
-    StringBuilder builder;
-
-    for (auto line : m_code.split('\n')) {
-        builder.append("  ");
-        builder.append(line);
-        builder.append("\n");
     }
 
-    return builder.build();
+    builder.append("</code>"sv);
+
+    if (m_style.length() >= 2)
+        builder.append("</strong>"sv);
+    else if (m_style.length() >= 2)
+        builder.append("</em>"sv);
+
+    builder.append("</pre>\n"sv);
+
+    return builder.to_byte_string();
+}
+
+Vector<ByteString> CodeBlock::render_lines_for_terminal(size_t) const
+{
+    Vector<ByteString> lines;
+
+    // Do not indent too much if we are in the synopsis
+    auto indentation = "    "sv;
+    if (m_current_section != nullptr) {
+        auto current_section_name = m_current_section->render_lines_for_terminal()[0];
+        if (current_section_name.contains("SYNOPSIS"sv))
+            indentation = "  "sv;
+    }
+
+    for (auto const& line : m_code.split('\n', SplitBehavior::KeepEmpty))
+        lines.append(ByteString::formatted("{}{}", indentation, line));
+
+    return lines;
 }
 
 RecursionDecision CodeBlock::walk(Visitor& visitor) const
@@ -104,14 +117,14 @@ static Optional<int> line_block_prefix(StringView const& line)
     return {};
 }
 
-OwnPtr<CodeBlock> CodeBlock::parse(LineIterator& lines)
+OwnPtr<CodeBlock> CodeBlock::parse(LineIterator& lines, Heading* current_section)
 {
     if (lines.is_end())
         return {};
 
     StringView line = *lines;
     if (open_fence_re.match(line).success)
-        return parse_backticks(lines);
+        return parse_backticks(lines, current_section);
 
     if (line_block_prefix(line).has_value())
         return parse_indent(lines);
@@ -119,7 +132,7 @@ OwnPtr<CodeBlock> CodeBlock::parse(LineIterator& lines)
     return {};
 }
 
-OwnPtr<CodeBlock> CodeBlock::parse_backticks(LineIterator& lines)
+OwnPtr<CodeBlock> CodeBlock::parse_backticks(LineIterator& lines, Heading* current_section)
 {
     StringView line = *lines;
 
@@ -160,7 +173,7 @@ OwnPtr<CodeBlock> CodeBlock::parse_backticks(LineIterator& lines)
         builder.append('\n');
     }
 
-    return make<CodeBlock>(language, style, builder.build());
+    return make<CodeBlock>(language, style, builder.to_byte_string(), current_section);
 }
 
 OwnPtr<CodeBlock> CodeBlock::parse_indent(LineIterator& lines)
@@ -183,6 +196,6 @@ OwnPtr<CodeBlock> CodeBlock::parse_indent(LineIterator& lines)
         builder.append('\n');
     }
 
-    return make<CodeBlock>("", "", builder.build());
+    return make<CodeBlock>("", "", builder.to_byte_string(), nullptr);
 }
 }

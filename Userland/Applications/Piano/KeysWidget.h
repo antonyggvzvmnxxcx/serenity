@@ -24,18 +24,18 @@ public:
     int mouse_note() const;
 
 private:
-    KeysWidget(NonnullRefPtr<LibDSP::Keyboard>);
+    KeysWidget(NonnullRefPtr<DSP::Keyboard>);
 
     virtual void paint_event(GUI::PaintEvent&) override;
     virtual void mousedown_event(GUI::MouseEvent&) override;
     virtual void mouseup_event(GUI::MouseEvent&) override;
     virtual void mousemove_event(GUI::MouseEvent&) override;
 
-    int note_for_event_position(Gfx::IntPoint const&) const;
+    int note_for_event_position(Gfx::IntPoint) const;
 
-    void set_key(i8 key, LibDSP::Keyboard::Switch);
+    void set_key(i8 key, DSP::Keyboard::Switch);
 
-    NonnullRefPtr<LibDSP::Keyboard> m_keyboard;
+    NonnullRefPtr<DSP::Keyboard> m_keyboard;
 
     bool m_mouse_down { false };
     int m_mouse_note { -1 };

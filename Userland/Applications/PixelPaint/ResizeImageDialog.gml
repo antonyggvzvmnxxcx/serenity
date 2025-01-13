@@ -1,14 +1,14 @@
 @GUI::Widget {
     fill_with_background_color: true
     min_width: 260
-    min_height: 210
+    min_height: 280
     layout: @GUI::VerticalBoxLayout {
         margins: [4]
     }
 
     @GUI::GroupBox {
         title: "Size (px)"
-        shrink_to_fit: true
+        preferred_height: "fit"
         layout: @GUI::VerticalBoxLayout {
             margins: [4]
         }
@@ -69,7 +69,7 @@
 
     @GUI::GroupBox {
         title: "Scaling Mode"
-        shrink_to_fit: true
+        preferred_height: "fit"
         layout: @GUI::VerticalBoxLayout {
             margins: [4]
         }
@@ -92,23 +92,33 @@
             text: "Bilinear"
             autosize: true
         }
+
+        @GUI::RadioButton {
+            name: "box_sampling_radio"
+            text: "Box Sampling"
+            autosize: true
+        }
+
+        @GUI::RadioButton {
+            name: "resize_canvas"
+            text: "Resize Canvas (None)"
+            autosize: true
+        }
     }
 
     @GUI::Widget {
         layout: @GUI::HorizontalBoxLayout {}
 
-        @GUI::Widget {}
+        @GUI::Layout::Spacer {}
 
-        @GUI::Button {
+        @GUI::DialogButton {
             name: "ok_button"
             text: "OK"
-            max_width: 75
         }
 
-        @GUI::Button {
+        @GUI::DialogButton {
             name: "cancel_button"
             text: "Cancel"
-            max_width: 75
         }
     }
 }

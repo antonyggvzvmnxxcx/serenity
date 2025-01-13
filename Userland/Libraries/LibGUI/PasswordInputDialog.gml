@@ -1,4 +1,4 @@
-@GUI::Widget {
+@GUI::PasswordInputDialogWidget {
     fill_with_background_color: true
     layout: @GUI::HorizontalBoxLayout {
         margins: [8]
@@ -9,11 +9,13 @@
         shrink_to_fit: true
         layout: @GUI::VerticalBoxLayout {}
 
-        @GUI::Label {
-            name: "key_icon_label"
+        @GUI::ImageWidget {
+            name: "key_icon"
             fixed_height: 32
             fixed_width: 32
         }
+
+        @GUI::Layout::Spacer {}
     }
 
     @GUI::Widget {
@@ -76,7 +78,7 @@
                 spacing: 6
             }
 
-            @GUI::Widget {}
+            @GUI::Layout::Spacer {}
 
             @GUI::DialogButton {
                 text: "OK"

@@ -20,13 +20,12 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
     parser.add_option(permissions, "Apply these permissions going forward", "permissions", 'p', "unveil-permissions");
     parser.add_option(should_sleep, "Sleep after processing all arguments", "sleep", 's');
     parser.add_option(Core::ArgsParser::Option {
-        .requires_argument = true,
+        .argument_mode = Core::ArgsParser::OptionArgumentMode::Required,
         .help_string = "Add a path to the unveil list",
         .long_name = "unveil",
         .short_name = 'u',
         .value_name = "path",
-        .accept_value = [&](auto* s) {
-            StringView path { s };
+        .accept_value = [&](StringView path) {
             if (path.is_empty())
                 return false;
             auto maybe_error = Core::System::unveil(path, permissions);
@@ -37,11 +36,11 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
             return true;
         } });
     parser.add_option(Core::ArgsParser::Option {
-        .requires_argument = false,
+        .argument_mode = Core::ArgsParser::OptionArgumentMode::None,
         .help_string = "Lock the veil",
         .long_name = "lock",
         .short_name = 'l',
-        .accept_value = [&](auto*) {
+        .accept_value = [&](StringView) {
             auto maybe_error = Core::System::unveil(nullptr, nullptr);
             if (maybe_error.is_error()) {
                 warnln("unveil(nullptr, nullptr): {}", maybe_error.error());
@@ -54,7 +53,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
         .name = "path",
         .min_values = 0,
         .max_values = INT_MAX,
-        .accept_value = [&](auto* s) {
+        .accept_value = [&](StringView s) {
             auto maybe_error = Core::System::access(s, X_OK);
             if (maybe_error.is_error())
                 warnln("'{}' - fail: {}", s, maybe_error.error());

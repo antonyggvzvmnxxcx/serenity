@@ -106,14 +106,15 @@ enum class DHCPMessageType : u8 {
 };
 
 template<>
-struct AK::Traits<DHCPOption> : public GenericTraits<DHCPOption> {
+struct AK::Traits<DHCPOption> : public DefaultTraits<DHCPOption> {
     static constexpr bool is_trivial() { return true; }
     static unsigned hash(DHCPOption u) { return int_hash((u8)u); }
 };
 
 struct ParsedDHCPv4Options {
     template<typename T>
-    Optional<const T> get(DHCPOption option_name) const requires(IsTriviallyCopyable<T>)
+    Optional<T const> get(DHCPOption option_name) const
+    requires(IsTriviallyCopyable<T>)
     {
         auto option = options.get(option_name);
         if (!option.has_value()) {
@@ -150,19 +151,19 @@ struct ParsedDHCPv4Options {
         return values;
     }
 
-    String to_string() const
+    ByteString to_byte_string() const
     {
         StringBuilder builder;
-        builder.append("DHCP Options (");
+        builder.append("DHCP Options ("sv);
         builder.appendff("{}", options.size());
-        builder.append(" entries)\n");
+        builder.append(" entries)\n"sv);
         for (auto& opt : options) {
             builder.appendff("\toption {} ({} bytes):", (u8)opt.key, (u8)opt.value.length);
             for (auto i = 0; i < opt.value.length; ++i)
                 builder.appendff(" {} ", ((u8 const*)opt.value.value)[i]);
             builder.append('\n');
         }
-        return builder.build();
+        return builder.to_byte_string();
     }
 
     struct DHCPOptionValue {
@@ -214,8 +215,17 @@ public:
     MACAddress const& chaddr() const { return *(MACAddress const*)&m_chaddr[0]; }
     void set_chaddr(MACAddress const& mac) { *(MACAddress*)&m_chaddr[0] = mac; }
 
-    StringView sname() const { return { (char const*)&m_sname[0] }; }
-    StringView file() const { return { (char const*)&m_file[0] }; }
+    StringView sname() const
+    {
+        char const* sname_ptr = reinterpret_cast<char const*>(&m_sname[0]);
+        return { sname_ptr, strlen(sname_ptr) };
+    }
+
+    StringView file() const
+    {
+        char const* file_ptr = reinterpret_cast<char const*>(&m_file[0]);
+        return { file_ptr, strlen(file_ptr) };
+    }
 
 private:
     NetworkOrdered<u8> m_op;

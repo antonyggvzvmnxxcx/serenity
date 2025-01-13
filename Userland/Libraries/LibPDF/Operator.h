@@ -7,7 +7,6 @@
 #pragma once
 
 #include <AK/Format.h>
-#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/Vector.h>
 #include <LibPDF/Value.h>
@@ -107,7 +106,7 @@ public:
 
         if (symbol_string == "'")
             return OperatorType::TextNextLineShowString;
-        if (symbol_string == "''")
+        if (symbol_string == "\"")
             return OperatorType::TextNextLineShowStringSetSpacing;
 
         dbgln("unsupported graphics symbol {}", symbol_string);
@@ -141,7 +140,7 @@ public:
         if (operator_type == OperatorType::TextNextLineShowString)
             return "'";
         if (operator_type == OperatorType::TextNextLineShowStringSetSpacing)
-            return "''";
+            return "\"";
 
         VERIFY_NOT_REACHED();
     }
@@ -174,13 +173,13 @@ struct Formatter<PDF::Operator> : Formatter<StringView> {
             PDF::Operator::operator_symbol(op.type()));
 
         if (!op.arguments().is_empty()) {
-            builder.append(" [");
+            builder.append(" ["sv);
             for (auto& argument : op.arguments())
                 builder.appendff(" {}", argument);
-            builder.append(" ]");
+            builder.append(" ]"sv);
         }
 
-        return Formatter<StringView>::format(format_builder, builder.to_string());
+        return Formatter<StringView>::format(format_builder, builder.to_byte_string());
     }
 };
 

@@ -6,6 +6,7 @@
  */
 
 #include "BarsVisualizationWidget.h"
+#include <AK/IntegralMath.h>
 #include <AK/Math.h>
 #include <AK/TypedTransfer.h>
 #include <LibDSP/FFT.h>
@@ -32,7 +33,7 @@ void BarsVisualizationWidget::render(GUI::PaintEvent& event, FixedArray<float> c
 
     AK::TypedTransfer<float>::copy(m_previous_samples.data(), samples.data(), samples.size());
 
-    LibDSP::fft(m_fft_samples.span(), false);
+    DSP::fft(m_fft_samples.span(), false);
 
     Array<float, bar_count> groups {};
 
@@ -74,7 +75,7 @@ void BarsVisualizationWidget::render(GUI::PaintEvent& event, FixedArray<float> c
     int const top_vertical_margin = 15;
     int const pixels_inbetween_groups = frame_inner_rect().width() > 350 ? 5 : 2;
     int const pixel_per_group_width = (frame_inner_rect().width() - horizontal_margin * 2 - pixels_inbetween_groups * (bar_count - 1)) / bar_count;
-    int const max_height = frame_inner_rect().height() - top_vertical_margin;
+    int const max_height = AK::max(0, frame_inner_rect().height() - top_vertical_margin);
     int current_xpos = horizontal_margin;
     for (size_t g = 0; g < bar_count; g++) {
         m_gfx_falling_bars[g] = AK::min(clamp(max_height - static_cast<int>(groups[g] * static_cast<float>(max_height) * 0.8f), 0, max_height), m_gfx_falling_bars[g]);
@@ -91,18 +92,18 @@ BarsVisualizationWidget::BarsVisualizationWidget()
     , m_logarithmic_spectrum(true)
 {
     m_context_menu = GUI::Menu::construct();
-    auto frequency_energy_action = GUI::Action::create_checkable("Adjust frequency energy (for aesthetics)", [&](GUI::Action& action) {
+    auto frequency_energy_action = GUI::Action::create_checkable("Adjust Frequency Energy", [&](GUI::Action& action) {
         m_adjust_frequencies = action.is_checked();
     });
     frequency_energy_action->set_checked(true);
     m_context_menu->add_action(frequency_energy_action);
-    auto logarithmic_spectrum_action = GUI::Action::create_checkable("Scale spectrum logarithmically", [&](GUI::Action& action) {
+    auto logarithmic_spectrum_action = GUI::Action::create_checkable("Scale Spectrum Logarithmically", [&](GUI::Action& action) {
         m_logarithmic_spectrum = action.is_checked();
     });
     logarithmic_spectrum_action->set_checked(true);
     m_context_menu->add_action(logarithmic_spectrum_action);
 
-    m_fft_window = LibDSP::Window<float>::hann<fft_size>();
+    m_fft_window = DSP::Window<float>::hann<fft_size>();
 
     // As we use full-overlapping windows, the passed-in data is only half the size of one FFT operation.
     MUST(set_render_sample_count(fft_size / 2));

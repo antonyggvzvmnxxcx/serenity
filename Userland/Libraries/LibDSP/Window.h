@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Arne Elster (arne@elster.li)
+ * Copyright (c) 2021, Arne Elster <arne@elster.li>
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -9,7 +9,7 @@
 #include <AK/FixedArray.h>
 #include <AK/Math.h>
 
-namespace LibDSP {
+namespace DSP {
 
 template<typename T>
 class Window final {

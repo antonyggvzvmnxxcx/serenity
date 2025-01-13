@@ -8,7 +8,7 @@
 #pragma once
 
 #include <AK/Error.h>
-#include <Kernel/VirtualAddress.h>
+#include <Kernel/Memory/VirtualAddress.h>
 
 namespace Kernel::Memory {
 
@@ -64,6 +64,6 @@ template<>
 struct AK::Formatter<Kernel::Memory::VirtualRange> : Formatter<FormatString> {
     ErrorOr<void> format(FormatBuilder& builder, Kernel::Memory::VirtualRange value)
     {
-        return Formatter<FormatString>::format(builder, "{} - {} (size {:p})", value.base().as_ptr(), value.base().offset(value.size() - 1).as_ptr(), value.size());
+        return Formatter<FormatString>::format(builder, "{} - {} (size {:p})"sv, value.base().as_ptr(), value.base().offset(value.size() - 1).as_ptr(), value.size());
     }
 };

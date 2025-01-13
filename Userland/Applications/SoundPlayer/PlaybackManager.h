@@ -10,7 +10,7 @@
 #include <AK/FixedArray.h>
 #include <AK/Queue.h>
 #include <AK/Vector.h>
-#include <LibAudio/ConnectionFromClient.h>
+#include <LibAudio/ConnectionToServer.h>
 #include <LibAudio/Loader.h>
 #include <LibAudio/Resampler.h>
 #include <LibAudio/Sample.h>
@@ -18,7 +18,7 @@
 
 class PlaybackManager final {
 public:
-    PlaybackManager(NonnullRefPtr<Audio::ConnectionFromClient>);
+    PlaybackManager(NonnullRefPtr<Audio::ConnectionToServer>);
     ~PlaybackManager() = default;
 
     void play();
@@ -29,14 +29,12 @@ public:
     bool toggle_pause();
     void set_loader(NonnullRefPtr<Audio::Loader>&&);
     RefPtr<Audio::Loader> loader() const { return m_loader; }
-    size_t device_sample_rate() const { return m_device_sample_rate; }
 
-    int last_seek() const { return m_last_seek; }
     bool is_paused() const { return m_paused; }
     float total_length() const { return m_total_length; }
     FixedArray<Audio::Sample> const& current_buffer() const { return m_current_buffer; }
 
-    NonnullRefPtr<Audio::ConnectionFromClient> connection() const { return m_connection; }
+    NonnullRefPtr<Audio::ConnectionToServer> connection() const { return m_connection; }
 
     Function<void()> on_update;
     Function<void()> on_finished_playing;
@@ -50,15 +48,11 @@ private:
 
     bool m_paused { true };
     bool m_loop = { false };
-    size_t m_last_seek { 0 };
     float m_total_length { 0 };
-    size_t m_device_sample_rate { 44100 };
-    size_t m_device_samples_per_buffer { 0 };
     size_t m_samples_to_load_per_buffer { 0 };
     RefPtr<Audio::Loader> m_loader { nullptr };
-    NonnullRefPtr<Audio::ConnectionFromClient> m_connection;
+    NonnullRefPtr<Audio::ConnectionToServer> m_connection;
     FixedArray<Audio::Sample> m_current_buffer;
-    Optional<Audio::ResampleHelper<Audio::Sample>> m_resampler;
     RefPtr<Core::Timer> m_timer;
 
     // Controls the GUI update rate. A smaller value makes the visualizations nicer.

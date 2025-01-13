@@ -19,10 +19,10 @@ constexpr void const* bitap_bitwise(void const* haystack, size_t haystack_length
 {
     VERIFY(needle_length < 32);
 
-    u64 lookup = 0xfffffffe;
+    u32 lookup = 0xfffffffe;
 
     constexpr size_t mask_length = (size_t)((u8)-1) + 1;
-    u64 needle_mask[mask_length];
+    u32 needle_mask[mask_length];
 
     for (size_t i = 0; i < mask_length; ++i)
         needle_mask[i] = 0xffffffff;
@@ -43,7 +43,8 @@ constexpr void const* bitap_bitwise(void const* haystack, size_t haystack_length
 }
 
 template<typename HaystackIterT>
-inline Optional<size_t> memmem(HaystackIterT const& haystack_begin, HaystackIterT const& haystack_end, Span<const u8> needle) requires(requires { (*haystack_begin).data(); (*haystack_begin).size(); })
+inline Optional<size_t> memmem(HaystackIterT const& haystack_begin, HaystackIterT const& haystack_end, ReadonlyBytes needle)
+requires(requires { (*haystack_begin).data(); (*haystack_begin).size(); })
 {
     auto prepare_kmp_partial_table = [&] {
         Vector<int, 64> table;
@@ -122,7 +123,7 @@ inline Optional<size_t> memmem_optional(void const* haystack, size_t haystack_le
     }
 
     // Fallback to KMP.
-    Array<Span<const u8>, 1> spans { Span<const u8> { (u8 const*)haystack, haystack_length } };
+    Array<ReadonlyBytes, 1> spans { ReadonlyBytes { (u8 const*)haystack, haystack_length } };
     return memmem(spans.begin(), spans.end(), { (u8 const*)needle, needle_length });
 }
 

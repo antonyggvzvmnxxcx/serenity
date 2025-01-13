@@ -1,15 +1,16 @@
 #!/usr/bin/env -S bash ../.port_include.sh
-port="halflife"
-version="2022.05.01"  # Bogus version, this was the last time the commit hashes were updated.
-_hlsdk_commit=808be9442f60b4388f68fcef8b2659d0cd6db17b
-useconfigure="true"
+port='halflife'
+version='2022.12.26'  # Bogus version, this was the last time the commit hashes were updated.
+_hlsdk_commit='63e3769c46ba7f502b53abdfdd55597e4130c0dd'
+useconfigure='true'
 depends=("xash3d-fwgs")
-workdir="hlsdk-xash3d-${_hlsdk_commit}"
-files="https://github.com/FWGS/hlsdk-xash3d/archive/${_hlsdk_commit}.tar.gz hlsdk-xash3d-${_hlsdk_commit}.tar.gz fd17436571341bd5e50739f22d84f9857f492637479144d01b1ffc1ead9d776b"
-auth_type=sha256
-launcher_name="Half-Life"
-launcher_category="Games"
-launcher_command="sh /home/anon/Games/halflife/hl.sh"
+workdir="hlsdk-portable-${_hlsdk_commit}"
+files=(
+    "https://github.com/FWGS/hlsdk-portable/archive/${_hlsdk_commit}.tar.gz#b010c94ed400e44508f43706aeea68b82615c6ad22d2b1b892e8d6201d97503d"
+)
+launcher_name='Half-Life'
+launcher_category='&Games'
+launcher_command='sh /home/anon/Games/halflife/hl.sh'
 
 export PKG_CONFIG_PATH="${SERENITY_INSTALL_ROOT}/usr/local/lib/pkgconfig"
 

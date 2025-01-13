@@ -5,6 +5,7 @@
  */
 
 #include <Kernel/Devices/BlockDevice.h>
+#include <Kernel/FileSystem/SysFS/Subsystems/DeviceIdentifiers/BlockDevicesDirectory.h>
 
 namespace Kernel {
 
@@ -24,7 +25,51 @@ void AsyncBlockDeviceRequest::start()
     m_block_device.start_request(*this);
 }
 
+BlockDevice::BlockDevice(MajorAllocation::BlockDeviceFamily block_device_family, MinorNumber minor, size_t block_size)
+    : Device(MajorAllocation::block_device_family_to_major_number(block_device_family), minor)
+    , m_block_size(block_size)
+{
+    // 512 is the minimum sector size in most block devices
+    VERIFY(m_block_size >= 512);
+    VERIFY(is_power_of_two(m_block_size));
+    m_block_size_log = AK::log2(m_block_size);
+}
+
 BlockDevice::~BlockDevice() = default;
+
+void BlockDevice::after_inserting_add_symlink_to_device_identifier_directory()
+{
+    VERIFY(m_symlink_sysfs_component);
+    SysFSBlockDevicesDirectory::the().devices_list({}).with([&](auto& list) -> void {
+        list.append(*m_symlink_sysfs_component);
+    });
+}
+
+void BlockDevice::before_will_be_destroyed_remove_symlink_from_device_identifier_directory()
+{
+    VERIFY(m_symlink_sysfs_component);
+    SysFSBlockDevicesDirectory::the().devices_list({}).with([&](auto& list) -> void {
+        list.remove(*m_symlink_sysfs_component);
+    });
+}
+
+// FIXME: This method will be eventually removed after all nodes in /sys/dev/block/ are symlinks
+void BlockDevice::after_inserting_add_to_device_identifier_directory()
+{
+    VERIFY(m_sysfs_component);
+    SysFSBlockDevicesDirectory::the().devices_list({}).with([&](auto& list) -> void {
+        list.append(*m_sysfs_component);
+    });
+}
+
+// FIXME: This method will be eventually removed after all nodes in /sys/dev/block/ are symlinks
+void BlockDevice::before_will_be_destroyed_remove_from_device_identifier_directory()
+{
+    VERIFY(m_sysfs_component);
+    SysFSBlockDevicesDirectory::the().devices_list({}).with([&](auto& list) -> void {
+        list.remove(*m_sysfs_component);
+    });
+}
 
 bool BlockDevice::read_block(u64 index, UserOrKernelBuffer& buffer)
 {

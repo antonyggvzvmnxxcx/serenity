@@ -32,12 +32,12 @@ static ErrorOr<NonnullRefPtr<Object>> parse_gml_object(Queue<Token>& tokens)
         TRY(object->add_property_child(TRY(Node::from_token<Comment>(tokens.dequeue()))));
 
     if (peek() != Token::Type::ClassMarker)
-        return Error::from_string_literal("Expected class marker"sv);
+        return Error::from_string_literal("Expected class marker");
 
     tokens.dequeue();
 
     if (peek() != Token::Type::ClassName)
-        return Error::from_string_literal("Expected class name"sv);
+        return Error::from_string_literal("Expected class name");
 
     auto class_name = tokens.dequeue();
     object->set_name(class_name.m_view);
@@ -46,7 +46,7 @@ static ErrorOr<NonnullRefPtr<Object>> parse_gml_object(Queue<Token>& tokens)
 
         tokens.dequeue();
 
-        NonnullRefPtrVector<Comment> pending_comments;
+        Vector<NonnullRefPtr<Comment>> pending_comments;
         for (;;) {
             if (peek() == Token::Type::RightCurly) {
                 // End of object
@@ -69,10 +69,10 @@ static ErrorOr<NonnullRefPtr<Object>> parse_gml_object(Queue<Token>& tokens)
                 auto property_name = tokens.dequeue();
 
                 if (property_name.m_view.is_empty())
-                    return Error::from_string_literal("Expected non-empty property name"sv);
+                    return Error::from_string_literal("Expected non-empty property name");
 
                 if (peek() != Token::Type::Colon)
-                    return Error::from_string_literal("Expected ':'"sv);
+                    return Error::from_string_literal("Expected ':'");
 
                 tokens.dequeue();
 
@@ -82,12 +82,12 @@ static ErrorOr<NonnullRefPtr<Object>> parse_gml_object(Queue<Token>& tokens)
                 else if (peek() == Token::Type::JsonValue)
                     value = TRY(try_make_ref_counted<JsonValueNode>(TRY(JsonValueNode::from_string(tokens.dequeue().m_view))));
 
-                auto property = TRY(try_make_ref_counted<KeyValuePair>(property_name.m_view, value.release_nonnull()));
+                auto property = TRY(try_make_ref_counted<KeyValuePair const>(property_name.m_view, value.release_nonnull()));
                 TRY(object->add_property_child(property));
             } else if (peek() == Token::Type::Comment) {
                 pending_comments.append(TRY(Node::from_token<Comment>(tokens.dequeue())));
             } else {
-                return Error::from_string_literal("Expected child, property, comment, or }}"sv);
+                return Error::from_string_literal("Expected child, property, comment, or }}");
             }
         }
 
@@ -96,7 +96,7 @@ static ErrorOr<NonnullRefPtr<Object>> parse_gml_object(Queue<Token>& tokens)
             TRY(object->add_sub_object_child(pending_comments.take_first()));
 
         if (peek() != Token::Type::RightCurly)
-            return Error::from_string_literal("Expected }}"sv);
+            return Error::from_string_literal("Expected }}");
 
         tokens.dequeue();
     }

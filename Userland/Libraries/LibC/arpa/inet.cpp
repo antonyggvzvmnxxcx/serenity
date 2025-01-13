@@ -27,8 +27,13 @@ char const* inet_ntop(int af, void const* src, char* dst, socklen_t len)
             errno = ENOSPC;
             return nullptr;
         }
-        auto str = IPv6Address(((in6_addr const*)src)->s6_addr).to_string();
-        if (!str.copy_characters_to_buffer(dst, len)) {
+        auto str_or_error = IPv6Address(((in6_addr const*)src)->s6_addr).to_string();
+        if (str_or_error.is_error()) {
+            errno = ENOMEM;
+            return nullptr;
+        }
+        auto str = str_or_error.release_value();
+        if (!str.bytes_as_string_view().copy_characters_to_buffer(dst, len)) {
             errno = ENOSPC;
             return nullptr;
         }
@@ -64,7 +69,7 @@ int inet_pton(int af, char const* src, void* dst)
         *(uint32_t*)dst = u.l;
         return 1;
     } else if (af == AF_INET6) {
-        auto addr = IPv6Address::from_string(src);
+        auto addr = IPv6Address::from_string({ src, strlen(src) });
         if (!addr.has_value()) {
             errno = EINVAL;
             return 0;

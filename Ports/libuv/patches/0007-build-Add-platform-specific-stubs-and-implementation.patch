@@ -27,7 +27,7 @@ index d285ed9..10fbd7f 100644
  
 diff --git a/src/unix/serenity-core.c b/src/unix/serenity-core.c
 new file mode 100644
-index 0000000..4438d15
+index 0000000..5c34b75
 --- /dev/null
 +++ b/src/unix/serenity-core.c
 @@ -0,0 +1,112 @@
@@ -66,9 +66,9 @@ index 0000000..4438d15
 +static uint64_t uv__read_proc_memstat(const char* what) {
 +  uint64_t rc;
 +  char* p;
-+  char buf[4096];  /* Large enough to hold all of /proc/memstat. */
++  char buf[4096];  /* Large enough to hold all of /sys/kernel/memstat. */
 +
-+  if (uv__slurp("/proc/memstat", buf, sizeof(buf)))
++  if (uv__slurp("/sys/kernel/memstat", buf, sizeof(buf)))
 +    return 0;
 +
 +  p = strstr(buf, what);
@@ -85,12 +85,12 @@ index 0000000..4438d15
 +}
 +
 +uint64_t uv_get_free_memory(void) {
-+  return uv__read_proc_memstat("user_physical_available\":") * PAGE_SIZE;
++  return uv__read_proc_memstat("physical_available\":") * PAGE_SIZE;
 +}
 +
 +
 +uint64_t uv_get_total_memory(void) {
-+  return (uv__read_proc_memstat("user_physical_allocated\":") + uv__read_proc_memstat("user_physical_available\":")) * PAGE_SIZE;
++  return (uv__read_proc_memstat("physical_allocated\":") + uv__read_proc_memstat("physical_available\":")) * PAGE_SIZE;
 +}
 +
 +void uv_loadavg(double avg[3]) {
@@ -104,9 +104,9 @@ index 0000000..4438d15
 +  struct timespec now;
 +  int r;
 +
-+  /* Try /proc/uptime first, then fallback to clock_gettime(). */
++  /* Try /sys/kernel/uptime first, then fallback to clock_gettime(). */
 +  
-+  if (0 == uv__slurp("/proc/uptime", buf, sizeof(buf)))
++  if (0 == uv__slurp("/sys/kernel/uptime", buf, sizeof(buf)))
 +    if (1 == sscanf(buf, "%lf", uptime))
 +      return 0;
 +
