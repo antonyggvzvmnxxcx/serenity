@@ -595,9 +595,33 @@ static OpenerPolicy obtain_an_opener_policy(JS::NonnullGCPtr<Fetch::Infrastructu
 // https://html.spec.whatwg.org/multipage/browsing-the-web.html#attempt-to-create-a-non-fetch-scheme-document
 static JS::GCPtr<DOM::Document> attempt_to_create_a_non_fetch_scheme_document(NonFetchSchemeNavigationParams const& params)
 {
-    // FIXME: Implement this algorithm to hand off to external software or display inline content
-    dbgln("(FIXME) Don't know how to navigate to {}", params.url);
-    return nullptr;
+    // 1. Let url be navigationParams's URL.
+    auto url = params.url;
+
+    // 2. Let navigable be navigationParams's navigable.
+    auto navigable = params.navigable;
+
+    // 3. If url is to be handled using a mechanism that does not affect navigable, e.g., because url's scheme is handled externally, then:
+    if (navigable && navigable->page().client().handle_non_fetch_scheme(params.url)) {
+        // 1. Hand-off to external software given url, navigable, navigationParams's target snapshot sandboxing flags, navigationParams's source snapshot has
+        // transient activation, and navigationParams's initiator origin.
+        // FIXME: We only send the URL.
+        // 2. Return null.
+        return nullptr;
+    }
+
+    // 4. Handle url by displaying some sort of inline content, e.g., an error message because the specified scheme is not one of the supported protocols, or an]
+    // inline prompt to allow the user to select a registered handler for the given scheme. Return the result of displaying the inline content given navigable,
+    // navigationParams's id, navigationParams's navigation timing type, and navigationParams's user involvement.
+    auto error_message = MUST(String::formatted("Unsupported scheme: {}", url.scheme()));
+    auto error_html = load_error_page(url, error_message).release_value_but_fixme_should_propagate_errors();
+    auto document = create_document_for_inline_content(navigable, params.id, [error_html](auto& document) {
+        auto parser = HTML::HTMLParser::create(document, error_html, "utf-8"sv);
+        document.set_url(URL::URL("about:error"));
+        parser->run();
+    });
+    document->make_unsalvageable("navigation-failure"_string);
+    return document;
 }
 
 // https://html.spec.whatwg.org/multipage/browsing-the-web.html#create-navigation-params-from-a-srcdoc-resource
@@ -1143,13 +1167,12 @@ WebIDL::ExceptionOr<void> Navigable::populate_session_history_entry_document(
             // 2. Set saveExtraDocumentState to false.
             saveExtraDocumentState = false;
         }
-
         // 4. Otherwise, if any of the following are true:
         //  - navigationParams is null;
         //  - FIXME: the result of should navigation response to navigation request of type in target be blocked by Content Security Policy? given navigationParams's request, navigationParams's response, navigationParams's policy container's CSP list, cspNavigationType, and navigable is "Blocked";
         //  - FIXME: navigationParams's reserved environment is non-null and the result of checking a navigation response's adherence to its embedder policy given navigationParams's response, navigable, and navigationParams's policy container's embedder policy is false; or
         //  - FIXME: the result of checking a navigation response's adherence to `X-Frame-Options` given navigationParams's response, navigable, navigationParams's policy container's CSP list, and navigationParams's origin is false,
-        if (navigation_params.has<Empty>() || navigation_params.has<NullWithError>()) {
+        else if (navigation_params.has<Empty>() || navigation_params.has<NullWithError>()) {
             // 1. Set entry's document state's document to the result of creating a document for inline content that doesn't have a DOM, given navigable, null, and navTimingType. The inline content should indicate to the user the sort of error that occurred.
             auto error_message = navigation_params.has<NullWithError>() ? navigation_params.get<NullWithError>() : "Unknown error"sv;
 
